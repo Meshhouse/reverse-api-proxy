@@ -23,7 +23,9 @@
     "fastify": "^3.5.1",
     "fastify-caching": "^6.0.1",
     "fastify-cors": "^4.1.0",
-    "nodemon": "^1.17.5"
+    "fastify-sensible": "^3.0.1",
+    "nodemon": "^1.17.5",
+    "pino-pretty": "^4.3.0"
   },
   "devDependencies": {
     "@types/cheerio": "^0.22.22",

@@ -1,5 +1,5 @@
 export const getSingleModel = {
-  querystring: {
+  params: {
     id: {
       type: 'number'
     }
@@ -28,6 +28,14 @@ export const getSingleModel = {
             }
           }
         }
+      }
+    },
+    400: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number' },
+        error: { type: 'string' },
+        message: { type: 'string' }
       }
     }
   }
@@ -75,7 +83,7 @@ export const getModels = {
             properties: {
               id: { type: 'number' },
               parentId: { type: 'number' },
-              slug: { type: 'string' },
+              slug: { type: 'number' },
               name: { type: 'string' }
             }
           }
@@ -91,6 +99,14 @@ export const getModels = {
           }
         },
         totalPages: { type: 'number' }
+      }
+    },
+    400: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number' },
+        error: { type: 'string' },
+        message: { type: 'string' }
       }
     }
   }

@@ -33,3 +33,33 @@ type SFMLabLink = {
   link: string;
   filename: string;
 }
+
+type SFMLabParams = {
+  category?: number;
+  order_by?: string;
+  license?: number;
+  search_text?: string;
+  page?: number;
+}
+
+type SFMLabQuery = {
+  category?: number;
+  order?: string;
+  license?: number;
+  search?: string;
+  page?: number;
+}
+
+type SFMLabQuerySingle = {
+  id?: number
+}
+
+type FastifyCacheObject = {
+  item: unknown;
+  stored: number;
+  ttl: number;
+}
+
+type SFMLabSingleModelCache = FastifyCacheObject & {
+  item: SFMLabModel
+}

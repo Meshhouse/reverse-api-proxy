@@ -1,9 +1,10 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 import { isDownloadLink } from '../helpers/typings';
+import { slugifyToExtension } from '../helpers';
 
 const sfmlabInstance = axios.create({
-  baseURL: 'https://sfmlab.com',
+  baseURL: 'https://smutba.se',
   responseType: 'text',
   timeout: 10000,
 });
@@ -146,7 +147,7 @@ export async function getModels(query: SFMLabQuery): Promise<SFMLabFetch | Error
         id: Number(id),
         name: title,
         image: image,
-        extension: '.sfm',
+        extension: slugifyToExtension(category),
         category: category,
       });
     });
@@ -192,7 +193,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
 
       const model = {
         id: id,
-        extension: '.sfm',
+        extension: slugifyToExtension(category),
         category: category,
         name: title,
         description: description,

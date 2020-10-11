@@ -1,23 +1,31 @@
 import fastify from 'fastify';
 import fastifyCors from 'fastify-cors';
 import fastifyCaching from 'fastify-caching';
+import fastifySensible from 'fastify-sensible';
 
 import * as schemas from './schemas';
 import * as SFMLab from './handlers/sfmlab';
+import * as Smutbase from './handlers/smutbase';
+import * as Open3DLab from './handlers/open3dlab';
 
 const server = fastify({
-  logger: false
+  logger: {
+    level: 'info',
+    prettyPrint: true
+  }
 });
 
 const cacheTTL = 1000 * 60 * 5; // in milliseconds
 const cacheTTLSingle = 1000 * 60 * 60;
 
-server.register(fastifyCors, {
+void server.register(fastifySensible);
+
+void server.register(fastifyCors, {
   origin: true,
   methods: ['GET']
 });
 
-server.register(fastifyCaching, {
+void server.register(fastifyCaching, {
   privacy: 'private'
 });
 
@@ -26,23 +34,24 @@ server.route({
   url: '/api/integrations/sfmlab/models',
   schema: schemas.SFMLab.getModels,
   handler: (request, reply) => {
-    const key = Buffer.from(JSON.stringify(request.query)).toString('base64');
+    const query = request.query as SFMLabQuery;
+    const key = Buffer.from(JSON.stringify(query)).toString('base64');
 
-    (server as any).cache.get(`sfmlab-get-models$key=${key}`, async(err: any, obj: any) => {
+    (server as any).cache.get(`sfmlab-get-models$key=${key}`, async(err: string, obj: any) => {
       if (obj !== null) {
-        reply.send(obj.item);
+        void reply.send(obj.item);
       } else {
         try {
-          const fetch = await SFMLab.getModels(request.query);
+          const fetch = await SFMLab.getModels(query);
 
-          (server as any).cache.set(`sfmlab-get-models$key=${key}`, fetch, cacheTTL, (err: any) => {
+          (server as any).cache.set(`sfmlab-get-models$key=${key}`, fetch, cacheTTL, (err: string) => {
             if (err) {
-              return reply.send(err);
+              void reply.send(server.httpErrors.badRequest(err));
             }
-            reply.send(fetch);
+            void reply.send(fetch);
           });
         } catch (err) {
-          reply.send(err);
+          void reply.send(server.httpErrors.badRequest(err));
         }
       }
     });
@@ -51,26 +60,143 @@ server.route({
 
 server.route({
   method: 'GET',
-  url: '/api/integrations/sfmlab/models/single',
+  url: '/api/integrations/sfmlab/models/:id',
   schema: schemas.SFMLab.getSingleModel,
   handler: (request, reply) => {
-    const key: number = (request.query as any).id ?? 0;
+    const query = request.params as SFMLabQuerySingle;
+    const key: number = query.id ?? 0;
 
-    (server as any).cache.get(`sfmlab-get-models-single$id=${key}`, async(err: any, obj: any) => {
+    (server as any).cache.get(`sfmlab-get-models-single$id=${key}`, async(err: string, obj: SFMLabSingleModelCache | null) => {
       if (obj !== null) {
-        reply.send(obj.item);
+        void reply.send(obj.item);
       } else {
         try {
-          const fetch = await SFMLab.getSingleModel(request.query);
+          const fetch = await SFMLab.getSingleModel(query);
 
-          (server as any).cache.set(`sfmlab-get-models-single$id=${key}`, fetch, cacheTTLSingle, (err: any) => {
+          (server as any).cache.set(`sfmlab-get-models-single$id=${key}`, fetch, cacheTTLSingle, (err: string) => {
             if (err) {
-              return reply.send(err);
+              void reply.send(server.httpErrors.badRequest(err));
             }
-            reply.send(fetch);
+            void reply.send(fetch);
           });
         } catch (err) {
-          reply.send(err);
+          void reply.send(server.httpErrors.badRequest(err));
+        }
+      }
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  url: '/api/integrations/open3dlab/models',
+  schema: schemas.SFMLab.getModels,
+  handler: (request, reply) => {
+    const query = request.query as SFMLabQuery;
+    const key = Buffer.from(JSON.stringify(query)).toString('base64');
+
+    (server as any).cache.get(`open3dlab-get-models$key=${key}`, async(err: string, obj: any) => {
+      if (obj !== null) {
+        void reply.send(obj.item);
+      } else {
+        try {
+          const fetch = await Open3DLab.getModels(query);
+
+          (server as any).cache.set(`open3dlab-get-models$key=${key}`, fetch, cacheTTL, (err: string) => {
+            if (err) {
+              void reply.send(server.httpErrors.badRequest(err));
+            }
+            void reply.send(fetch);
+          });
+        } catch (err) {
+          void reply.send(server.httpErrors.badRequest(err));
+        }
+      }
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  url: '/api/integrations/open3dlab/models/:id',
+  schema: schemas.SFMLab.getSingleModel,
+  handler: (request, reply) => {
+    const query = request.params as SFMLabQuerySingle;
+    const key: number = query.id ?? 0;
+
+    (server as any).cache.get(`open3dlab-get-models-single$id=${key}`, async(err: string, obj: SFMLabSingleModelCache | null) => {
+      if (obj !== null) {
+        void reply.send(obj.item);
+      } else {
+        try {
+          const fetch = await Open3DLab.getSingleModel(query);
+
+          (server as any).cache.set(`open3dlab-get-models-single$id=${key}`, fetch, cacheTTLSingle, (err: string) => {
+            if (err) {
+              void reply.send(server.httpErrors.badRequest(err));
+            }
+            void reply.send(fetch);
+          });
+        } catch (err) {
+          void reply.send(server.httpErrors.badRequest(err));
+        }
+      }
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  url: '/api/integrations/smutbase/models',
+  schema: schemas.SFMLab.getModels,
+  handler: (request, reply) => {
+    const query = request.query as SFMLabQuery;
+    const key = Buffer.from(JSON.stringify(query)).toString('base64');
+
+    (server as any).cache.get(`smutbase-get-models$key=${key}`, async(err: string, obj: any) => {
+      if (obj !== null) {
+        void reply.send(obj.item);
+      } else {
+        try {
+          const fetch = await Smutbase.getModels(query);
+
+          (server as any).cache.set(`smutbase-get-models$key=${key}`, fetch, cacheTTL, (err: string) => {
+            if (err) {
+              void reply.send(server.httpErrors.badRequest(err));
+            }
+            void reply.send(fetch);
+          });
+        } catch (err) {
+          void reply.send(server.httpErrors.badRequest(err));
+        }
+      }
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  url: '/api/integrations/smutbase/models/:id',
+  schema: schemas.SFMLab.getSingleModel,
+  handler: (request, reply) => {
+    const query = request.params as SFMLabQuerySingle;
+    const key: number = query.id ?? 0;
+
+    (server as any).cache.get(`smutbase-get-models-single$id=${key}`, async(err: string, obj: SFMLabSingleModelCache | null) => {
+      if (obj !== null) {
+        void reply.send(obj.item);
+      } else {
+        try {
+          const fetch = await Smutbase.getSingleModel(query);
+
+          (server as any).cache.set(`smutbase-get-models-single$id=${key}`, fetch, cacheTTLSingle, (err: string) => {
+            if (err) {
+              void reply.send(server.httpErrors.badRequest(err));
+            }
+            void reply.send(fetch);
+          });
+        } catch (err) {
+          void reply.send(server.httpErrors.badRequest(err));
         }
       }
     });
