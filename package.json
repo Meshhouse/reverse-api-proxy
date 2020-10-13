@@ -2,9 +2,10 @@
   "name": "reverse-api-proxy",
   "version": "1.0.0",
   "description": "API proxy for Integration services, used by MeshHouse application",
-  "main": "src/server.ts",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "tsc && nodemon --ext ts,js dist/server.js",
+    "dev": "nodemon -e ts --exec \"npm run dev-build\"",
+    "dev-build": "tsc && npm run start",
     "build": "tsc",
     "start": "node dist/server.js"
   },

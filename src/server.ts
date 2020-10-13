@@ -31,7 +31,7 @@ void server.register(fastifyCaching, {
 
 server.route({
   method: 'GET',
-  url: '/api/integrations/sfmlab/models',
+  url: '/integrations/sfmlab/models',
   schema: schemas.SFMLab.getModels,
   handler: (request, reply) => {
     const query = request.query as SFMLabQuery;
@@ -60,7 +60,7 @@ server.route({
 
 server.route({
   method: 'GET',
-  url: '/api/integrations/sfmlab/models/:id',
+  url: '/integrations/sfmlab/models/:id',
   schema: schemas.SFMLab.getSingleModel,
   handler: (request, reply) => {
     const query = request.params as SFMLabQuerySingle;
@@ -89,7 +89,7 @@ server.route({
 
 server.route({
   method: 'GET',
-  url: '/api/integrations/open3dlab/models',
+  url: '/integrations/open3dlab/models',
   schema: schemas.SFMLab.getModels,
   handler: (request, reply) => {
     const query = request.query as SFMLabQuery;
@@ -118,7 +118,7 @@ server.route({
 
 server.route({
   method: 'GET',
-  url: '/api/integrations/open3dlab/models/:id',
+  url: '/integrations/open3dlab/models/:id',
   schema: schemas.SFMLab.getSingleModel,
   handler: (request, reply) => {
     const query = request.params as SFMLabQuerySingle;
@@ -147,7 +147,7 @@ server.route({
 
 server.route({
   method: 'GET',
-  url: '/api/integrations/smutbase/models',
+  url: '/integrations/smutbase/models',
   schema: schemas.SFMLab.getModels,
   handler: (request, reply) => {
     const query = request.query as SFMLabQuery;
@@ -176,7 +176,7 @@ server.route({
 
 server.route({
   method: 'GET',
-  url: '/api/integrations/smutbase/models/:id',
+  url: '/integrations/smutbase/models/:id',
   schema: schemas.SFMLab.getSingleModel,
   handler: (request, reply) => {
     const query = request.params as SFMLabQuerySingle;
