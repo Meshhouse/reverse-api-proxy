@@ -5,6 +5,13 @@ type Category = {
   name: string;
 }
 
+type Comment = {
+  username: string;
+  avatar: string;
+  message: string;
+  date: number;
+}
+
 type SFMLabModel = {
   id: number;
   name: string
@@ -15,6 +22,7 @@ type SFMLabModel = {
   images?: string[];
   size?: string;
   downloadLinks?: SFMLabLink[];
+  comments?: Comment[];
 }
 
 type SFMLabLicense = {
@@ -60,6 +68,36 @@ type FastifyCacheObject = {
   ttl: number;
 }
 
+type SFMLabModelsCache = FastifyCacheObject & {
+  item: SFMLabFetch
+}
+
 type SFMLabSingleModelCache = FastifyCacheObject & {
   item: SFMLabModel
 }
+
+type ModelHaven3DFetch = {
+  models: ModelHaven3DModel[];
+  categories: Category[];
+  totalPages: number;
+}
+
+type ModelHaven3DQuery = {
+  category?: string;
+  search?: string;
+  page?: number;
+}
+
+type ModelHaven3DParams = {
+  c?: string;
+  o: string;
+  s?: string;
+}
+
+type ModelHaven3DModel = {
+  id: string;
+  name: string;
+  image: string;
+  extension: string | string[];
+}
+

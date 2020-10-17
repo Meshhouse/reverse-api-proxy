@@ -1,12 +1,13 @@
-import axios from 'axios';
+import got from 'got';
 import cheerio from 'cheerio';
 import { isDownloadLink } from '../helpers/typings';
 import { slugifyToExtension } from '../helpers';
+import SanitizeHTML from 'sanitize-html';
 
-const sfmlabInstance = axios.create({
-  baseURL: 'https://smutba.se',
-  responseType: 'text',
-  timeout: 10000,
+const gotInstance = got.extend({
+  prefixUrl: 'https://smutba.se',
+  timeout: 30000,
+  responseType: 'text'
 });
 
 /**
@@ -49,6 +50,38 @@ function getCategories(options: cheerio.Cheerio): Category[] {
 }
 
 /**
+ * Find all commentaries for model from custom elements root
+ * @param container Custom element root
+ */
+function getComments(container: cheerio.Root): Comment[] {
+  const comments = container('comment-element');
+  const commentsArray = [];
+
+  for (let i = 0; i < comments.length; i++) {
+    const comment = comments[i];
+
+    const message = comment.attribs['comment'];
+
+    const dateSanitized = comment.attribs['submit_date'].replace(/;|,|\./gm, '');
+    const date = new Date(dateSanitized).getTime();
+
+    const avatar = comment.attribs['useravatar'];
+    const avatarLink = avatar.includes('https://') ? avatar : `https://sfmlab.com${avatar}`;
+
+    const username = comment.attribs['username'];
+
+    commentsArray.push({
+      username: username,
+      avatar: avatarLink,
+      message: message,
+      date: date
+    });
+  }
+
+  return commentsArray;
+}
+
+/**
  * Find total pages count
  * @param paginator Paginator element
  */
@@ -73,8 +106,9 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
 
   try {
     for (let i = 0; i < links.length; i++) {
-      const downloadPage = await sfmlabInstance.get(links.get()[i].attribs['href']);
-      const dom = cheerio.load(downloadPage.data);
+      const link: string = (links.get()[i].attribs['href']).substr(1);
+      const downloadPage = await gotInstance(link);
+      const dom = cheerio.load(downloadPage.body);
 
       const downloadLink = dom('.content-container .main-upload .project-description-div p:first-child a');
 
@@ -93,6 +127,7 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
 
 /**
  * Fetch models, categories, licenses and total pages count
+ * @param query Query object
  */
 export async function getModels(query: SFMLabQuery): Promise<SFMLabFetch | Error> {
   const params: SFMLabParams = {};
@@ -118,11 +153,11 @@ export async function getModels(query: SFMLabQuery): Promise<SFMLabFetch | Error
   }
 
   try {
-    const root = await sfmlabInstance.get('/', {
-      params: params
+    const root = await gotInstance('', {
+      searchParams: params
     });
 
-    const parser = cheerio.load(root.data);
+    const parser = cheerio.load(root.body);
 
     const body = parser('.content-container .entry-content .entry-list .entry');
     const options = parser('#id_category option');
@@ -168,8 +203,8 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
   if (Object.hasOwnProperty.call(query, 'id')) {
     try {
       const id = query.id ?? 0;
-      const root = await sfmlabInstance.get(`/project/${id}`);
-      const parser = cheerio.load(root.data);
+      const root = await gotInstance(`project/${id}`);
+      const parser = cheerio.load(root.body);
 
       const title = parser('.container #file_title').text();
       const description = parser('.content-container .main-upload .panel .panel__body').html() ?? '';
@@ -178,9 +213,14 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
 
       const category = parser('.content-container .side-upload .panel__footer dl:nth-child(5) dd').text();
 
+      const commentsRoot = cheerio.load((await gotInstance(`project/${id}/comments`)).body, {
+        xmlMode: true
+      });
+
       const images: string[] = [];
 
       const downloadLinks = await getDownloadLinks(parser);
+      const comments = getComments(commentsRoot);
 
       domImages.each((idx: number, element: cheerio.Element) => {
         images.push(element.attribs['src'] ?? '');
@@ -196,10 +236,15 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
         extension: slugifyToExtension(category),
         category: category,
         name: title,
-        description: description,
+        description: SanitizeHTML(description, {
+          exclusiveFilter: ((frame) => {
+            return !frame.text.trim();
+          })
+        }),
         images: images,
         size: fileSize,
-        downloadLinks: isDownloadLink(downloadLinks) ? downloadLinks : []
+        downloadLinks: isDownloadLink(downloadLinks) ? downloadLinks : [],
+        comments: comments
       };
 
       return model;

@@ -27,18 +27,6 @@ export const getSingleModel = {
               filename: { type: 'string' }
             }
           }
-        },
-        comments: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              username: { type: 'string' },
-              avatar: { type: 'string' },
-              message: { type: 'string' },
-              date: { type: 'number' }
-            }
-          }
         }
       }
     },
@@ -56,12 +44,6 @@ export const getSingleModel = {
 export const getModels = {
   querystring: {
     category: {
-      type: 'number'
-    },
-    license: {
-      type: 'number'
-    },
-    order: {
       type: 'string'
     },
     search: {
@@ -80,11 +62,10 @@ export const getModels = {
           items: {
             type: 'object',
             properties: {
-              id: { type: 'number' },
+              id: { type: 'string' },
               name: { type: 'string' },
               image: { type: 'string' },
               extension: { type: 'string' },
-              category: { type: 'string' }
             }
           }
         },
@@ -95,17 +76,7 @@ export const getModels = {
             properties: {
               id: { type: 'number' },
               parentId: { type: 'number' },
-              slug: { type: 'number' },
-              name: { type: 'string' }
-            }
-          }
-        },
-        licenses: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'number' },
+              slug: { type: 'string' },
               name: { type: 'string' }
             }
           }
