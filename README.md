@@ -14,6 +14,7 @@ In 3rd variant CORS is ignored, because CORS for browsers only and not for CLI a
 API can cache requests to origin server, also we can provide similar REST API to different Integration services.
 
 ## Installation
+1.
 ```bash
 git clone https://github.com/Meshhouse/reverse-api-proxy.git
 cd reverse-api-proxy
@@ -21,6 +22,23 @@ npm install
 npm run build
 npm run start
 ```
+2.
+Create **config.json** in *src* folder
+
+### Config file
+Config.json contains your credentials to integration services:
+```json
+{
+  "credentials": {
+    "sfmlab": {
+      "login": "login",
+      "password": "password"
+    }
+  }
+}
+```
+
+Currently authentication not implemented
 
 ## License
 This code are licensed by MIT License
