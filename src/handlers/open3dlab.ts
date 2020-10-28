@@ -102,7 +102,6 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
   const linksArray: SFMLabLink[] = [];
 
   const links = parser('.content-container .main-upload table tbody tr td a:first-child');
-  const filenames = parser('.content-container .main-upload table tbody tr td .js-edit-input__wrapper strong');
 
   try {
     for (let i = 0; i < links.length; i++) {
@@ -112,10 +111,12 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
 
       const downloadLink = dom('.content-container .main-upload .project-description-div p:first-child a');
 
+      const filename = downloadLink.attr('href')?.match(/[a-zA-Z0-9_.]+(?=\?)/gm);
+
       if (downloadLink !== null) {
         linksArray.push({
           link: downloadLink.attr('href') ?? '',
-          filename: filenames.get(i).children[0].data ?? ''
+          filename: (filename as any)[0] ?? ''
         });
       }
     }
