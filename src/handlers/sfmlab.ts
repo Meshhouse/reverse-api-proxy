@@ -64,7 +64,7 @@ function getComments(parser: cheerio.Root): Comment[] {
     const comment = comments.get()[i];
     const commentBody = cheerio.load(comment);
 
-    const message = commentBody('.comment__body .comment__content .content').html() || '';
+    const message = commentBody('.comment__body .comment__content .content').text() || '';
 
     const meta = commentBody('.comment__meta .comment__meta-left').text();
     const postedDate = (meta.match(/(?<=posted\s+on\s+).+(?=\.)/gm) as string[])[0] + '.';
