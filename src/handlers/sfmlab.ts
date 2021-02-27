@@ -5,6 +5,7 @@ import { isDownloadLink } from '../helpers/typings';
 //import setCookie from 'set-cookie-parser';
 //import FormData from 'form-data';
 import SanitizeHTML from 'sanitize-html';
+import { parse, format } from 'date-fns';
 
 const gotInstance = got.extend({
   prefixUrl: 'https://sfmlab.com',
@@ -55,28 +56,29 @@ function getCategories(options: cheerio.Cheerio): Category[] {
  * Find all commentaries for model from custom elements root
  * @param container Custom element root
  */
-function getComments(container: cheerio.Root): Comment[] {
-  const comments = container('comment-element');
+function getComments(parser: cheerio.Root): Comment[] {
+  const comments = parser('.comments .comment');
   const commentsArray = [];
 
   for (let i = 0; i < comments.length; i++) {
-    const comment = comments[i];
+    const comment = comments.get()[i];
+    const commentBody = cheerio.load(comment);
 
-    const message = comment.attribs['comment'];
+    const message = commentBody('.comment__body .comment__content .content').html() || '';
 
-    const dateSanitized = comment.attribs['submit_date'].replace(/;|,|\./gm, '');
-    const date = new Date(dateSanitized).getTime();
+    const meta = commentBody('.comment__meta .comment__meta-left').text();
+    const postedDate = (meta.match(/(?<=posted\s+on\s+).+(?=\.)/gm) as string[])[0] + '.';
+    const date = format(parse(postedDate, 'MMM. d, yyyy, h:mm aaaa', new Date('February 15, 2021 19:23:00')), 'T');
 
-    const avatar = comment.attribs['useravatar'];
-    const avatarLink = avatar.includes('https://') ? avatar : `https://sfmlab.com${avatar}`;
-
-    const username = comment.attribs['username'];
+    const avatarLink = commentBody('.comment__body .comment_avatar').get()[0].attribs['src'];
+    const username = commentBody('.comment__meta .comment__meta-left .username').text()
+    || commentBody('.comment__meta .comment__meta-left').text().split(' ')[0];
 
     commentsArray.push({
       username: username,
       avatar: avatarLink,
       message: message,
-      date: date
+      date: Number(date)
     });
   }
 
@@ -103,7 +105,7 @@ function detectLastPage(paginator: cheerio.Cheerio): number {
 async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Error> {
   const linksArray: SFMLabLink[] = [];
 
-  const links = parser('.content-container .main-upload table tbody tr td a:first-child');
+  const links = parser('.content-container .main-upload table tbody .row--border-bottom td a:first-of-type');
 
   try {
     for (let i = 0; i < links.length; i++) {
@@ -218,10 +220,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
 
       const category = parser('.content-container .side-upload .panel__footer dl:nth-child(5) dd').text();
 
-      const commentsRoot = cheerio.load((await gotInstance(`project/${id}/comments`)).body, {
-        xmlMode: true
-      });
-
+      const commentsRoot = cheerio.load((await gotInstance(`project/${id}/comments`)).body);
       const images: string[] = [];
 
       const downloadLinks = await getDownloadLinks(parser);
