@@ -5,7 +5,7 @@ import {
 import cheerio from 'cheerio';
 import { isDownloadLink } from '../helpers/typings';
 import SanitizeHTML from 'sanitize-html';
-import { parse, format } from 'date-fns';
+import { parse, format, isValid } from 'date-fns';
 
 /**
  * Find all model license from select HTML element
@@ -62,7 +62,19 @@ function getComments(parser: cheerio.Root): Comment[] {
 
     const meta = commentBody('.comment__meta .comment__meta-left').text();
     const postedDate = (meta.match(/(?<=posted\s+on\s+).+(?=\.)/gm) as string[])[0] + '.';
-    const date = format(parse(postedDate, 'MMM. d, yyyy, h:mm aaaa', new Date('February 15, 2021 19:23:00')), 'T');
+    let parsedDate = null;
+    // SFMLab is wrecked up timestamps
+    parsedDate = parse(postedDate, 'LLLL d, yyyy, h:mm aaaa', new Date('February 15, 2021 19:23:00'));
+
+    if (!isValid(parsedDate)) {
+      parsedDate = parse(postedDate, 'LLLL d, yyyy, h aaaa', new Date('February 15, 2021 19:23:00'));
+    }
+
+    if (!isValid(parsedDate)) {
+      parsedDate = new Date(0);
+    }
+
+    const date = format(parsedDate, 'T');
 
     const avatarLink = commentBody('.comment__body .comment_avatar').get()[0].attribs['src'];
     const username = commentBody('.comment__meta .comment__meta-left .username').text()
@@ -99,10 +111,12 @@ function detectLastPage(paginator: cheerio.Cheerio): number {
 async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Error> {
   const linksArray: SFMLabLink[] = [];
 
-  const links = parser('.content-container .main-upload table tbody .row--border-bottom td a:first-of-type');
+  const linkInfo = parser('.content-container .main-upload table tbody tr td[data-file-id]');
+  const links = parser('.content-container .main-upload table tbody tr td[colspan="9"] a:first-of-type');
 
   try {
     for (let i = 0; i < links.length; i++) {
+      const linkRow = cheerio.load(linkInfo[i].parent);
       const link: string = (links.get()[i].attribs['href']).substr(1);
       const downloadPage = await sfmlabGotInstance(link, {
         cookieJar: sfmlabCookieJar
@@ -111,17 +125,20 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
 
       const downloadLink = dom('.content-container .main-upload .project-description-div p:first-child a');
 
-      const filename = downloadLink.attr('href')?.match(/[a-zA-Z0-9_.]+(?=\?)/gm);
+      const filename = linkRow('td:first-child strong').text();
+      const fileSize = linkRow('td:last-child').text() || '';
 
       if (downloadLink !== null) {
         linksArray.push({
           link: downloadLink.attr('href') ?? '',
-          filename: (filename as any)[0] ?? ''
+          filename,
+          size: fileSize
         });
       }
     }
     return linksArray;
   } catch (err) {
+    console.error(err);
     return new Error(err);
   }
 }
@@ -178,7 +195,19 @@ export async function getModels(query: SFMLabQuery, useCookies = false): Promise
       const link = body('.entry__body .entry__title a')?.attr('href');
       const id = (link?.match(/\d+/) as string[])[0];
       const image = body('.entry__heading a img')?.attr('src') ?? '';
-      const category = body('.entry__tags .entry__tag')?.html() ?? '';
+      const tags = body('.entry__tags .entry__tag');
+
+      let category = '';
+      const modelTags: string[] = [];
+      let matureContent = false;
+      tags.each((idx, tag) => {
+        modelTags.push(tag.children[0].data ?? '');
+        if (tag.children[0].data === '18+') {
+          matureContent = true;
+        } else {
+          category = tag.children[0].data ?? '';
+        }
+      });
 
       models.push({
         id: Number(id),
@@ -186,6 +215,8 @@ export async function getModels(query: SFMLabQuery, useCookies = false): Promise
         image: image,
         extension: '.sfm',
         category: category,
+        tags: modelTags,
+        mature_content: matureContent
       });
     });
 
@@ -196,6 +227,7 @@ export async function getModels(query: SFMLabQuery, useCookies = false): Promise
       totalPages: lastPage
     };
   } catch (err) {
+    console.error(err);
     return Promise.reject(err);
   }
 }
@@ -218,6 +250,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
       const domImages = parser('.content-container .main-upload .text-center a picture.project-detail-image-main img');
 
       const category = parser('.content-container .side-upload .panel__footer dl:nth-child(5) dd').text();
+      const matureContent = parser('.content-container .main-upload .alert.alert-info strong').text() === 'Adult content';
 
       const commentsRoot = cheerio.load((await sfmlabGotInstance(`project/${id}/comments`, {
         cookieJar: sfmlabCookieJar
@@ -236,7 +269,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
         images.push(thubmnail);
       }
 
-      const model = {
+      const model: SFMLabModel = {
         id: id,
         extension: '.sfm',
         category: category,
@@ -248,12 +281,14 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
         }),
         images: images,
         size: fileSize,
+        mature_content: matureContent,
         downloadLinks: isDownloadLink(downloadLinks) ? downloadLinks : [],
         comments: comments
       };
 
       return model;
     } catch (err) {
+      console.error(err);
       return Promise.reject(err);
     }
   }

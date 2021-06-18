@@ -19,6 +19,7 @@ export const getSingleModel: FastifySchema = {
           items: { type: 'string' }
         },
         category: { type: 'string' },
+        mature_content: { type: 'boolean' },
         size: { type: 'string' },
         downloadLinks: {
           type: 'array',
@@ -26,7 +27,8 @@ export const getSingleModel: FastifySchema = {
             type: 'object',
             properties: {
               link: { type: 'string' },
-              filename: { type: 'string' }
+              filename: { type: 'string' },
+              size: { type: 'string' }
             }
           }
         },
@@ -55,7 +57,7 @@ export const getSingleModel: FastifySchema = {
   }
 };
 
-export const getModels: FastifySchema = {
+const sfmlabGetModelsShared = {
   querystring: {
     category: {
       type: 'number'
@@ -91,7 +93,14 @@ export const getModels: FastifySchema = {
               name: { type: 'string' },
               image: { type: 'string' },
               extension: { type: 'string' },
-              category: { type: 'string' }
+              category: { type: 'string' },
+              mature_content: { type: 'boolean' },
+              tags: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              }
             }
           }
         },
@@ -129,6 +138,10 @@ export const getModels: FastifySchema = {
       }
     }
   }
+};
+
+export const getModels: FastifySchema = {
+  ...sfmlabGetModelsShared
 };
 
 export default {

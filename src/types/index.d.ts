@@ -21,6 +21,8 @@ type SFMLabModel = {
   description?: string;
   images?: string[];
   size?: string;
+  tags?: string[];
+  mature_content?: boolean;
   downloadLinks?: SFMLabLink[];
   comments?: Comment[];
 }
@@ -40,6 +42,7 @@ type SFMLabFetch = {
 type SFMLabLink = {
   link: string;
   filename: string;
+  size?: string;
 }
 
 type SFMLabParams = {

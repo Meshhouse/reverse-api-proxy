@@ -27,14 +27,14 @@ export const SFMLabGetModels: RouteOptions = {
     const useCookies = request.headers['x-meshhouse-mature'] !== undefined && request.headers['x-meshhouse-mature'] === 'true';
     const key = Buffer.from(JSON.stringify(query)).toString('base64');
 
-    (server as any).cache.get(`sfmlab-get-models$key=${key}`, async(err: string, obj: SFMLabModelsCache) => {
+    (server as any).cache.get(`sfmlab-get-models$key=${key}$mature=${useCookies}`, async(err: string, obj: SFMLabModelsCache) => {
       if (obj !== null) {
         void reply.send(obj.item);
       } else {
         try {
           const fetch = await SFMLab.getModels(query, useCookies);
 
-          (server as any).cache.set(`sfmlab-get-models$key=${key}`, fetch, cacheTTL, (err: string) => {
+          (server as any).cache.set(`sfmlab-get-models$key=${key}$mature=${useCookies}`, fetch, cacheTTL, (err: string) => {
             if (err) {
               void reply.send(server.httpErrors.badRequest(err));
             }
