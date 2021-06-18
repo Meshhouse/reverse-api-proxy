@@ -1,6 +1,6 @@
 import {
-  sfmlabGotInstance,
-  sfmlabCookieJar
+  sfmlabCookieJar,
+  sfmlabRequest
 } from '../models/got';
 import cheerio from 'cheerio';
 import { isDownloadLink } from '../helpers/typings';
@@ -118,7 +118,7 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
     for (let i = 0; i < links.length; i++) {
       const linkRow = cheerio.load(linkInfo[i].parent);
       const link: string = (links.get()[i].attribs['href']).substr(1);
-      const downloadPage = await sfmlabGotInstance(link, {
+      const downloadPage = await sfmlabRequest(link, {
         cookieJar: sfmlabCookieJar
       });
       const dom = cheerio.load(downloadPage.body);
@@ -171,7 +171,7 @@ export async function getModels(query: SFMLabQuery, useCookies = false): Promise
   }
 
   try {
-    const root = await sfmlabGotInstance('', {
+    const root = await sfmlabRequest('', {
       searchParams: params,
       cookieJar: useCookies ? sfmlabCookieJar : undefined
     });
@@ -239,7 +239,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
   if (Object.hasOwnProperty.call(query, 'id')) {
     try {
       const id = query.id ?? 0;
-      const root = await sfmlabGotInstance(`project/${id}`, {
+      const root = await sfmlabRequest(`project/${id}`, {
         cookieJar: sfmlabCookieJar
       });
       const parser = cheerio.load(root.body);
@@ -252,7 +252,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
       const category = parser('.content-container .side-upload .panel__footer dl:nth-child(5) dd').text();
       const matureContent = parser('.content-container .main-upload .alert.alert-info strong').text() === 'Adult content';
 
-      const commentsRoot = cheerio.load((await sfmlabGotInstance(`project/${id}/comments`, {
+      const commentsRoot = cheerio.load((await sfmlabRequest(`project/${id}/comments`, {
         cookieJar: sfmlabCookieJar
       })).body);
       const images: string[] = [];

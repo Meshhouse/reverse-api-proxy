@@ -4,7 +4,7 @@ import fastifyCaching from 'fastify-caching';
 import fastifySensible from 'fastify-sensible';
 import dotenv from 'dotenv';
 
-import * as auth from './auth';
+import { SFMLabAuthenticate } from './models/got';
 
 import * as routes from './routes';
 
@@ -18,7 +18,7 @@ export const server = fastify({
 });
 
 void (async(): Promise<void> => {
-  await auth.SFMLabAuthenticate();
+  await SFMLabAuthenticate();
   // Register modules
   void server.register(fastifySensible);
   void server.register(fastifyCors, {
