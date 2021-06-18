@@ -11,7 +11,7 @@ import * as Smutbase from '../handlers/smutbase';
 import * as Open3DLab from '../handlers/open3dlab';
 import * as ModelHaven3D from '../handlers/3dmodelhaven';
 
-const cacheTTL = 1000 * 60 * 5;
+const cacheTTL = 1000 * 60 * 1;
 const cacheTTLSingle = 1000 * 60 * 60;
 
 // SFMLab related routes
@@ -24,6 +24,7 @@ export const SFMLabGetModels: RouteOptions = {
   schema: schemas.SFMLab.getModels,
   handler: (request: FastifyRequest, reply: FastifyReply): void => {
     const query = request.query as SFMLabQuery;
+    const useCookies = request.headers['x-meshhouse-mature'] !== undefined && request.headers['x-meshhouse-mature'] === 'true';
     const key = Buffer.from(JSON.stringify(query)).toString('base64');
 
     (server as any).cache.get(`sfmlab-get-models$key=${key}`, async(err: string, obj: SFMLabModelsCache) => {
@@ -31,7 +32,7 @@ export const SFMLabGetModels: RouteOptions = {
         void reply.send(obj.item);
       } else {
         try {
-          const fetch = await SFMLab.getModels(query);
+          const fetch = await SFMLab.getModels(query, useCookies);
 
           (server as any).cache.set(`sfmlab-get-models$key=${key}`, fetch, cacheTTL, (err: string) => {
             if (err) {

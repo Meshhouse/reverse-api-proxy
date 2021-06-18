@@ -1,4 +1,6 @@
-export const getSingleModel = {
+import { FastifySchema } from 'fastify';
+
+export const getSingleModel: FastifySchema = {
   params: {
     id: {
       type: 'number'
@@ -53,7 +55,7 @@ export const getSingleModel = {
   }
 };
 
-export const getModels = {
+export const getModels: FastifySchema = {
   querystring: {
     category: {
       type: 'number'
@@ -69,6 +71,11 @@ export const getModels = {
     },
     page: {
       type: 'number'
+    }
+  },
+  headers: {
+    'x-meshhouse-mature': {
+      type: 'string'
     }
   },
   response: {

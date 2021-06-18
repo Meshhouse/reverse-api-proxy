@@ -1,17 +1,11 @@
-import got from 'got';
+import {
+  sfmlabGotInstance,
+  sfmlabCookieJar
+} from '../models/got';
 import cheerio from 'cheerio';
 import { isDownloadLink } from '../helpers/typings';
-//import config from '../config.json';
-//import setCookie from 'set-cookie-parser';
-//import FormData from 'form-data';
 import SanitizeHTML from 'sanitize-html';
 import { parse, format } from 'date-fns';
-
-const gotInstance = got.extend({
-  prefixUrl: 'https://sfmlab.com',
-  timeout: 30000,
-  responseType: 'text'
-});
 
 /**
  * Find all model license from select HTML element
@@ -110,7 +104,9 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
   try {
     for (let i = 0; i < links.length; i++) {
       const link: string = (links.get()[i].attribs['href']).substr(1);
-      const downloadPage = await gotInstance(link);
+      const downloadPage = await sfmlabGotInstance(link, {
+        cookieJar: sfmlabCookieJar
+      });
       const dom = cheerio.load(downloadPage.body);
 
       const downloadLink = dom('.content-container .main-upload .project-description-div p:first-child a');
@@ -134,7 +130,7 @@ async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Er
  * Fetch models, categories, licenses and total pages count
  * @param query Query object
  */
-export async function getModels(query: SFMLabQuery): Promise<SFMLabFetch | Error> {
+export async function getModels(query: SFMLabQuery, useCookies = false): Promise<SFMLabFetch | Error> {
   const params: SFMLabParams = {};
 
   if (Object.hasOwnProperty.call(query, 'category') && query.category !== -1) {
@@ -158,8 +154,9 @@ export async function getModels(query: SFMLabQuery): Promise<SFMLabFetch | Error
   }
 
   try {
-    const root = await gotInstance('', {
-      searchParams: params
+    const root = await sfmlabGotInstance('', {
+      searchParams: params,
+      cookieJar: useCookies ? sfmlabCookieJar : undefined
     });
 
     const parser = cheerio.load(root.body);
@@ -210,7 +207,9 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
   if (Object.hasOwnProperty.call(query, 'id')) {
     try {
       const id = query.id ?? 0;
-      const root = await gotInstance(`project/${id}`);
+      const root = await sfmlabGotInstance(`project/${id}`, {
+        cookieJar: sfmlabCookieJar
+      });
       const parser = cheerio.load(root.body);
 
       const title = parser('.container #file_title').text();
@@ -220,7 +219,9 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
 
       const category = parser('.content-container .side-upload .panel__footer dl:nth-child(5) dd').text();
 
-      const commentsRoot = cheerio.load((await gotInstance(`project/${id}/comments`)).body);
+      const commentsRoot = cheerio.load((await sfmlabGotInstance(`project/${id}/comments`, {
+        cookieJar: sfmlabCookieJar
+      })).body);
       const images: string[] = [];
 
       const downloadLinks = await getDownloadLinks(parser);
@@ -258,42 +259,3 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
   }
   return Promise.reject('model id is required');
 }
-
-/*export async function handleAuthentication(): Promise<any | Error> {
-  try {
-    const root = await gotInstance('accounts/login');
-    //const root = await axiosInstance.get('/accounts/login');
-    const rawCSRF = root.headers['set-cookie'];
-    const cookie = setCookie.parse(rawCSRF);
-    console.log(cookie);
-    const token: string = cookie[0].value;
-
-    const headers = {
-      'X-CSRFToken': token,
-      'Cookie': [
-        `csrftoken=${token}`
-      ]
-    };
-
-    console.log(headers);
-
-    const form = new FormData();
-    form.append('login', config.credentials.sfmlab.login);
-    form.append('password', config.credentials.sfmlab.password);
-
-    const response = await gotInstance.post('accounts/login/', {
-      headers: headers,
-      form: form,
-      searchParams: {
-        'next': '/'
-      },
-      followRedirect: false,
-    });
-
-    console.log(response.headers);
-    console.log(response.url);
-    return Promise.resolve(true);
-  } catch (err) {
-    return Promise.reject(err);
-  }
-}*/

@@ -21,6 +21,7 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
     "date-fns": "^2.17.0",
+    "dotenv": "^10.0.0",
     "fastify": "^3.5.1",
     "fastify-caching": "^6.0.1",
     "fastify-cors": "^4.1.0",
@@ -30,12 +31,14 @@
     "nodemon": "^1.17.5",
     "pino-pretty": "^4.3.0",
     "sanitize-html": "^2.1.0",
-    "set-cookie-parser": "^2.4.6"
+    "set-cookie-parser": "^2.4.6",
+    "tough-cookie": "^4.0.0"
   },
   "devDependencies": {
     "@types/cheerio": "^0.22.22",
     "@types/node": "^10.5.1",
     "@types/sanitize-html": "^1.27.0",
+    "@types/tough-cookie": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^4.4.0",
     "@typescript-eslint/parser": "^4.4.0",
     "eslint": "^7.11.0",
