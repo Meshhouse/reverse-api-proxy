@@ -4,6 +4,7 @@ import {
   format,
   isValid
 } from 'date-fns';
+import type { CookieJar } from 'tough-cookie';
 
 /**
  * Find all model license from select HTML element
@@ -100,4 +101,44 @@ export function detectLastPage(paginator: cheerio.Cheerio): number {
   return lastLink !== ''
     ? Number(lastLink?.split('page=')[1])
     : Number(activeLink);
+}
+
+
+/**
+ * Fetch download links from single model poge
+ * @param parser Cheerio parser instance
+ */
+export async function getDownloadLinks(parser: cheerio.Root, gotInstance: any, cookieJar?: CookieJar): Promise<SFMLabLink[] | Error> {
+  const linksArray: SFMLabLink[] = [];
+
+  const linkInfo = parser('.content-container .main-upload table tbody tr td[data-file-id]');
+  const links = parser('.content-container .main-upload table tbody tr td[colspan="9"] a:first-of-type');
+
+  try {
+    for (let i = 0; i < links.length; i++) {
+      const linkRow = cheerio.load(linkInfo[i].parent);
+      const link: string = (links.get()[i].attribs['href']).substr(1);
+      const downloadPage = await gotInstance(link, {
+        cookieJar
+      });
+      const dom = cheerio.load(downloadPage.body);
+
+      const downloadLink = dom('.content-container .main-upload .project-description-div p:first-child a');
+
+      const filename = linkRow('td:first-child strong').text();
+      const fileSize = linkRow('td:last-child').text() || '';
+
+      if (downloadLink !== null) {
+        linksArray.push({
+          link: downloadLink.attr('href') ?? '',
+          filename,
+          size: fileSize
+        });
+      }
+    }
+    return linksArray;
+  } catch (err) {
+    console.error(err);
+    return new Error(err);
+  }
 }

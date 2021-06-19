@@ -2,7 +2,8 @@ import {
   getLicenses,
   getCategories,
   getComments,
-  detectLastPage
+  detectLastPage,
+  getDownloadLinks
 } from '../handlers/sfmlab_based';
 import got from 'got';
 import cheerio from 'cheerio';
@@ -15,38 +16,6 @@ const gotInstance = got.extend({
   timeout: 30000,
   responseType: 'text'
 });
-
-/**
- * Fetch download links from single model poge
- * @param parser Cheerio parser instance
- */
-async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Error> {
-  const linksArray: SFMLabLink[] = [];
-
-  const links = parser('.content-container .main-upload table tbody tr td a:first-of-type');
-
-  try {
-    for (let i = 0; i < links.length; i++) {
-      const link: string = (links.get()[i].attribs['href']).substr(1);
-      const downloadPage = await gotInstance(link);
-      const dom = cheerio.load(downloadPage.body);
-
-      const downloadLink = dom('.content-container .main-upload .project-description-div p:first-child a');
-
-      const filename = downloadLink.attr('href')?.match(/[a-zA-Z0-9_.]+(?=\?)/gm);
-
-      if (downloadLink !== null) {
-        linksArray.push({
-          link: downloadLink.attr('href') ?? '',
-          filename: (filename as any)[0] ?? ''
-        });
-      }
-    }
-    return linksArray;
-  } catch (err) {
-    return new Error(err);
-  }
-}
 
 /**
  * Fetch models, categories, licenses and total pages count
@@ -141,7 +110,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
 
       const images: string[] = [];
 
-      const downloadLinks = await getDownloadLinks(parser);
+      const downloadLinks = await getDownloadLinks(parser, gotInstance);
       const comments = getComments(commentsRoot);
 
       domImages.each((idx: number, element: cheerio.Element) => {

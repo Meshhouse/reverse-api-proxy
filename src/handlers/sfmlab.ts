@@ -6,50 +6,13 @@ import {
   getLicenses,
   getCategories,
   getComments,
-  detectLastPage
+  detectLastPage,
+  getDownloadLinks
 } from '../handlers/sfmlab_based';
 import cheerio from 'cheerio';
 import { isDownloadLink } from '../helpers/typings';
 import SanitizeHTML from 'sanitize-html';
 
-/**
- * Fetch download links from single model poge
- * @param parser Cheerio parser instance
- */
-async function getDownloadLinks(parser: cheerio.Root): Promise<SFMLabLink[] | Error> {
-  const linksArray: SFMLabLink[] = [];
-
-  const linkInfo = parser('.content-container .main-upload table tbody tr td[data-file-id]');
-  const links = parser('.content-container .main-upload table tbody tr td[colspan="9"] a:first-of-type');
-
-  try {
-    for (let i = 0; i < links.length; i++) {
-      const linkRow = cheerio.load(linkInfo[i].parent);
-      const link: string = (links.get()[i].attribs['href']).substr(1);
-      const downloadPage = await sfmlabRequest(link, {
-        cookieJar: sfmlabCookieJar
-      });
-      const dom = cheerio.load(downloadPage.body);
-
-      const downloadLink = dom('.content-container .main-upload .project-description-div p:first-child a');
-
-      const filename = linkRow('td:first-child strong').text();
-      const fileSize = linkRow('td:last-child').text() || '';
-
-      if (downloadLink !== null) {
-        linksArray.push({
-          link: downloadLink.attr('href') ?? '',
-          filename,
-          size: fileSize
-        });
-      }
-    }
-    return linksArray;
-  } catch (err) {
-    console.error(err);
-    return new Error(err);
-  }
-}
 
 /**
  * Fetch models, categories, licenses and total pages count
@@ -165,7 +128,7 @@ export async function getSingleModel(query: SFMLabQuerySingle): Promise<SFMLabMo
       })).body);
       const images: string[] = [];
 
-      const downloadLinks = await getDownloadLinks(parser);
+      const downloadLinks = await getDownloadLinks(parser, sfmlabRequest, sfmlabCookieJar);
       const comments = getComments(commentsRoot);
 
       domImages.each((idx: number, element: cheerio.Element) => {
