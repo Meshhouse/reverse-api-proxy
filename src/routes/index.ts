@@ -11,7 +11,7 @@ import * as Smutbase from '../handlers/smutbase';
 import * as Open3DLab from '../handlers/open3dlab';
 import * as ModelHaven3D from '../handlers/3dmodelhaven';
 
-const cacheTTL = 1000 * 60 * 1;
+const cacheTTL = 1000 * 60 * 5;
 const cacheTTLSingle = 1000 * 60 * 60;
 
 // SFMLab related routes
