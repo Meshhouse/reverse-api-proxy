@@ -112,7 +112,7 @@ export async function getDownloadLinks(parser: cheerio.Root, gotInstance: any, c
   const linksArray: SFMLabLink[] = [];
 
   const linkInfo = parser('.content-container .main-upload table tbody tr td[data-file-id]');
-  const links = parser('.content-container .main-upload table tbody tr td[colspan="9"] a:first-of-type');
+  const links = parser('.content-container .main-upload table tbody tr td[colspan="9"] ul.download-set li.download-container:first-child a');
 
   try {
     for (let i = 0; i < links.length; i++) {
@@ -139,6 +139,6 @@ export async function getDownloadLinks(parser: cheerio.Root, gotInstance: any, c
     return linksArray;
   } catch (err) {
     console.error(err);
-    return new Error(err);
+    return new Error(String(err));
   }
 }

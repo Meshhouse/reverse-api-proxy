@@ -13,6 +13,10 @@ export const sfmlabGotInstance = got.extend({
 
 export async function SFMLabAuthenticate(): Promise<void | Error> {
   try {
+    if (!process.env.SFMLAB_LOGIN || !process.env.SFMLAB_PASSWORD) {
+      throw Error('sfmlab credentials not set');
+    }
+
     const loginPage = await sfmlabGotInstance('accounts/login');
     const formBody = cheerio.load(loginPage.body);
 
