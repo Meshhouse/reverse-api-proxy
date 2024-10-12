@@ -1,5 +1,8 @@
 # MeshHouse reverse API proxy
 API proxy for Integration services, used by MeshHouse application
+```
+This repository stays for history purpose, but API proxy is abandoned towards plugin API in MeshHouse application.
+```
 
 ## Why it exists
 Because some sites disable CORS (cross-origin request sharing) and when application try to connect to site, it fails with CORS error. There are 3 variants:
